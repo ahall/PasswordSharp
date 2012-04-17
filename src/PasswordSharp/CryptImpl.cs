@@ -29,16 +29,16 @@ namespace PasswordSharp
         static ArrayPointer<byte> sha256_rounds_prefix = new ArrayPointer<byte>(new byte[] { (byte)'r', (byte)'o', (byte)'u', (byte)'n', (byte)'d', (byte)'s', (byte)'=', 0 });
         static ArrayPointer<byte> sha512_rounds_prefix = new ArrayPointer<byte>(new byte[] { (byte)'r', (byte)'o', (byte)'u', (byte)'n', (byte)'d', (byte)'s', (byte)'=', 0 });
 
-        /* Maximum salt string length.  */
+        // Maximum salt string length
         const int SaltLenMax = 16;
 
-        /* Default number of rounds if not explicitly specified.  */
+        // Default number of rounds if not explicitly specified
         const int RoundsDefault = 5000;
 
-        /* Minimum number of rounds.  */
+        // Minimum number of rounds
         const int RoundsMin = 1000;
 
-        /* Maximum number of rounds.  */
+        // Maximum number of rounds
         const int RoundsMax = 999999999;
 
         internal static string CryptMd5(ArrayPointer<byte> key, ArrayPointer<byte> salt)
