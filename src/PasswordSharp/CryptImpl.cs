@@ -8,37 +8,8 @@ using System.IO;
 
 namespace PasswordSharp
 {
-    public class CryptImpl
+    internal class CryptImpl
     {
-        public static string Crypt(string key, string salt)
-        {
-            ArrayPointer<byte> key_ptr = new ArrayPointer<byte>(
-                Encoding.UTF8.GetBytes(key + "\0"));
-
-            ArrayPointer<byte> salt_ptr = new ArrayPointer<byte>(
-                Encoding.UTF8.GetBytes(salt + "\0"));
-
-            /* Try to find out whether we have to use MD5 encryption replacement.  */
-            if (strncmp(md5_salt_prefix, salt_ptr, strlen(md5_salt_prefix)) == 0)
-            {
-                return ExtractString(__md5_crypt(key_ptr, salt_ptr));
-            }
-
-            /* Try to find out whether we have to use SHA256 encryption replacement.  */
-            if (strncmp(sha256_salt_prefix, salt_ptr, strlen(sha256_salt_prefix)) == 0)
-            {
-                return ExtractString(__sha256_crypt(key_ptr, salt_ptr));
-            }
-
-            /* Try to find out whether we have to use SHA512 encryption replacement.  */
-            if (strncmp(sha512_salt_prefix, salt_ptr, strlen(sha512_salt_prefix)) == 0)
-            {
-                return ExtractString(__sha512_crypt(key_ptr, salt_ptr));
-            }
-
-            throw new ArgumentException("Unsupported algorithm");
-        }
-
         /* Table with characters for base64 transformation.  */
         static char[] b64t =
             "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".ToCharArray();
@@ -46,31 +17,31 @@ namespace PasswordSharp
         /* Define our magic string to mark salt for MD5 "encryption"
            replacement.  This is meant to be the same as for other MD5 based
            encryption implementations.  */
-        static ArrayPointer<byte> md5_salt_prefix = new ArrayPointer<byte>(new byte[] { (byte)'$', (byte)'1', (byte)'$', 0 });
+        internal static ArrayPointer<byte> md5_salt_prefix = new ArrayPointer<byte>(new byte[] { (byte)'$', (byte)'1', (byte)'$', 0 });
         static ArrayPointer<byte> dollar_sign = new ArrayPointer<byte>(new byte[] { (byte)'$', 0 });
 
         /* Define our magic string to mark salt for SHA256 "encryption"
            replacement.  */
-        static ArrayPointer<byte> sha256_salt_prefix = new ArrayPointer<byte>(new byte[] { (byte)'$', (byte)'5', (byte)'$', 0 });
-        static ArrayPointer<byte> sha512_salt_prefix = new ArrayPointer<byte>(new byte[] { (byte)'$', (byte)'6', (byte)'$', 0 });
+        internal static ArrayPointer<byte> sha256_salt_prefix = new ArrayPointer<byte>(new byte[] { (byte)'$', (byte)'5', (byte)'$', 0 });
+        internal static ArrayPointer<byte> sha512_salt_prefix = new ArrayPointer<byte>(new byte[] { (byte)'$', (byte)'6', (byte)'$', 0 });
 
         /* Prefix for optional rounds specification.  */
         static ArrayPointer<byte> sha256_rounds_prefix = new ArrayPointer<byte>(new byte[] { (byte)'r', (byte)'o', (byte)'u', (byte)'n', (byte)'d', (byte)'s', (byte)'=', 0 });
         static ArrayPointer<byte> sha512_rounds_prefix = new ArrayPointer<byte>(new byte[] { (byte)'r', (byte)'o', (byte)'u', (byte)'n', (byte)'d', (byte)'s', (byte)'=', 0 });
 
         /* Maximum salt string length.  */
-        const int SALT_LEN_MAX = 16;
+        const int SaltLenMax = 16;
 
         /* Default number of rounds if not explicitly specified.  */
-        const int ROUNDS_DEFAULT = 5000;
+        const int RoundsDefault = 5000;
 
         /* Minimum number of rounds.  */
-        const int ROUNDS_MIN = 1000;
+        const int RoundsMin = 1000;
 
         /* Maximum number of rounds.  */
-        const int ROUNDS_MAX = 999999999;
+        const int RoundsMax = 999999999;
 
-        private static ArrayPointer<byte> __md5_crypt(ArrayPointer<byte> key, ArrayPointer<byte> salt)
+        internal static string CryptMd5(ArrayPointer<byte> key, ArrayPointer<byte> salt)
         {
             /* We don't want to have an arbitrary limit in the size of the
                password.  We can compute the size of the result in advance and
@@ -84,10 +55,10 @@ namespace PasswordSharp
             buffer = new_buffer;
             buflen = needed;
 
-            return __md5_crypt_r(key, salt, buffer, buflen);
+            return ExtractString(__md5_crypt_r(key, salt, buffer, buflen));
         }
 
-        private static ArrayPointer<byte> __sha256_crypt(ArrayPointer<byte> key, ArrayPointer<byte> salt)
+        internal static string CryptSha256(ArrayPointer<byte> key, ArrayPointer<byte> salt)
         {
             /* We don't want to have an arbitrary limit in the size of the
                password.  We can compute an upper bound for the size of the
@@ -104,10 +75,10 @@ namespace PasswordSharp
             buffer = new_buffer;
             buflen = needed;
 
-            return __sha256_crypt_r(key, salt, buffer, buflen);
+            return ExtractString(__sha256_crypt_r(key, salt, buffer, buflen));
         }
 
-        private static ArrayPointer<byte> __sha512_crypt(ArrayPointer<byte> key, ArrayPointer<byte> salt)
+        internal static string CryptSha512(ArrayPointer<byte> key, ArrayPointer<byte> salt)
         {
             /* We don't want to have an arbitrary limit in the size of the
                password.  We can compute an upper bound for the size of the
@@ -124,10 +95,10 @@ namespace PasswordSharp
             buffer = new_buffer;
             buflen = needed;
 
-            return __sha512_crypt_r(key, salt, buffer, buflen);
+            return ExtractString(__sha512_crypt_r(key, salt, buffer, buflen));
         }
 
-        public static int strlen(ArrayPointer<byte> str)
+        internal static int strlen(ArrayPointer<byte> str)
         {
             for(int i = 0; ; i++, str++)
             {
@@ -136,7 +107,7 @@ namespace PasswordSharp
             }
         }
 
-        public static int strncmp(ArrayPointer<byte> str1, ArrayPointer<byte> str2, int length)
+        internal static int strncmp(ArrayPointer<byte> str1, ArrayPointer<byte> str2, int length)
         {
             for(int i = 0; i < length; i++, str1++, str2++)
             {
@@ -360,7 +331,7 @@ namespace PasswordSharp
             ArrayPointer<byte> p_bytes;
             ArrayPointer<byte> s_bytes;
             /* Default number of rounds.  */
-            int rounds = ROUNDS_DEFAULT;
+            int rounds = RoundsDefault;
             bool rounds_custom = false;
 
             /* Find beginning of salt string.  The prefix should normally always
@@ -377,12 +348,12 @@ namespace PasswordSharp
                 if (endp.Value == (byte)'$')
                 {
                     salt = endp + 1;
-                    rounds = (int)Math.Max(ROUNDS_MIN, Math.Min(srounds, ROUNDS_MAX));
+                    rounds = (int)Math.Max(RoundsMin, Math.Min(srounds, RoundsMax));
                     rounds_custom = true;
                 }
             }
 
-            salt_len = Math.Min(strcspn(salt, dollar_sign), SALT_LEN_MAX);
+            salt_len = Math.Min(strcspn(salt, dollar_sign), SaltLenMax);
             key_len = strlen(key);
 
             byte[] temp = new byte[key.SourceArray.Length];
@@ -576,7 +547,7 @@ namespace PasswordSharp
             ArrayPointer<byte> p_bytes;
             ArrayPointer<byte> s_bytes;
             /* Default number of rounds.  */
-            int rounds = ROUNDS_DEFAULT;
+            int rounds = RoundsDefault;
             bool rounds_custom = false;
 
             /* Find beginning of salt string.  The prefix should normally always
@@ -593,12 +564,12 @@ namespace PasswordSharp
                 if (endp.Value == (byte)'$')
                 {
                     salt = endp + 1;
-                    rounds = (int)Math.Max(ROUNDS_MIN, Math.Min(srounds, ROUNDS_MAX));
+                    rounds = (int)Math.Max(RoundsMin, Math.Min(srounds, RoundsMax));
                     rounds_custom = true;
                 }
             }
 
-            salt_len = Math.Min(strcspn(salt, dollar_sign), SALT_LEN_MAX);
+            salt_len = Math.Min(strcspn(salt, dollar_sign), SaltLenMax);
             key_len = strlen(key);
 
             byte[] temp = new byte[key.SourceArray.Length];
