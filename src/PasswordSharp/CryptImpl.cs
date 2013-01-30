@@ -337,8 +337,10 @@ namespace PasswordSharp
             /* Find beginning of salt string.  The prefix should normally always
                be present.  Just in case it is not.  */
             if (strncmp(sha256_salt_prefix, salt, strlen(sha256_salt_prefix)) == 0)
+            {
                 /* Skip salt prefix.  */
                 salt += strlen(sha256_salt_prefix);
+            }
 
             if (strncmp(salt, sha256_rounds_prefix, strlen(sha256_rounds_prefix)) == 0)
             {

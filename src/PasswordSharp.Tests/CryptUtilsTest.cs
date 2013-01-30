@@ -46,8 +46,8 @@ namespace PasswordSharp.Tests
         {
             string salt = CryptUtils.MakeSalt();
             string hash = CryptUtils.Crypt("temp321", salt);
-            Assert.AreEqual(106, hash.Length);
-            Assert.False(salt.Contains("="));
+            Assert.Greater(hash.Length, 106);
+            Assert.True(salt.Contains("rounds="));
             Assert.That(hash.StartsWith(salt + "$"));
 
             Assert.AreEqual(3, SplitHash(hash).Length);
@@ -58,8 +58,8 @@ namespace PasswordSharp.Tests
         {
             var salt = CryptUtils.MakeSalt(CryptUtils.TypeMd5);
             Assert.That(salt.StartsWith("$1$"));
-            Assert.AreEqual(11, salt.Length);
-            Assert.False(salt.Contains("="));
+            Assert.GreaterOrEqual(salt.Length, 11);
+            Assert.True(salt.Contains("rounds="));
         }
 
         [Test]
@@ -67,8 +67,8 @@ namespace PasswordSharp.Tests
         {
             var salt = CryptUtils.MakeSalt(CryptUtils.TypeSha256);
             Assert.That(salt.StartsWith("$5$"));
-            Assert.AreEqual(19, salt.Length);
-            Assert.False(salt.Contains("="));
+            Assert.GreaterOrEqual(salt.Length, 19);
+            Assert.True(salt.Contains("rounds="));
         }
 
         [Test]
@@ -76,12 +76,12 @@ namespace PasswordSharp.Tests
         {
             var salt = CryptUtils.MakeSalt();
             Assert.That(salt.StartsWith("$6$"));
-            Assert.AreEqual(19, salt.Length);
-            Assert.False(salt.Contains("="));
+            Assert.GreaterOrEqual(salt.Length, 19);
+            Assert.True(salt.Contains("rounds="));
 
             salt = CryptUtils.MakeSalt(CryptUtils.TypeSha512);
-            Assert.AreEqual(19, salt.Length);
-            Assert.False(salt.Contains("="));
+            Assert.GreaterOrEqual(salt.Length, 19);
+            Assert.True(salt.Contains("rounds="));
         }
 
         [Test]
@@ -130,6 +130,13 @@ namespace PasswordSharp.Tests
         }
 
         [Test]
+        public void Verify_Sha256_Rounds()
+        {
+            string hash = "$5$rounds=80000$0BKabwRh5zlhFvjJ$342hkYArrO6Zo9/qyWQx1ERtn5/ruHBSf0T94sKA6x.";
+            Assert.True(CryptUtils.Verify(hash, "temp123"));
+        }
+
+        [Test]
         public void Verify_Sha512()
         {
             string hash = "$6$N6zh6Fn8qjR+NTcf$PYE99rK0x1UIlTle1/xKYmKuixfb2rFLLRBE1S3a9mc8dFHIvQTQPq6Tapcgen7ChhLZvUI9BKjSHKSgjh45p/";
@@ -139,6 +146,13 @@ namespace PasswordSharp.Tests
             Assert.False(CryptUtils.Verify(hash, ""));
             Assert.False(CryptUtils.Verify(hash, "a"));
             Assert.False(CryptUtils.Verify(hash, "temp3210"));
+        }
+
+        [Test]
+        public void Verify_Sha512_Rounds()
+        {
+            string hash = "$6$rounds=60000$ud68WwQFgvTVQ7Li$9Jf8JGdoSDbdqZ4tjvNof7MF5wjkVMUirbrrLLZLXaVoFzm3qY6KSfbW7sgK1CD6Mp1xpnGJjBK2dtocpeoet.";
+            Assert.True(CryptUtils.Verify(hash, "temp123"));
         }
     }
 }

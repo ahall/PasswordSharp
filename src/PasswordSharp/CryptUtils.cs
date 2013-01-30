@@ -4,6 +4,55 @@ using System.Security.Cryptography;
 
 namespace PasswordSharp
 {
+    internal class SplittedHash
+    {
+        public string Protocol { get; set; }
+        public string Rounds { get; set; }
+        public string Hash { get; set; }
+
+        /// <summary>
+        /// Actual salt param of the hash, does NOT include the protocol and rounds.
+        /// </summary>
+        public string Salt { get; set; }
+
+        public static SplittedHash Parse(string str)
+        {
+            var sh = new SplittedHash();
+
+            var ret = str.Split(new char[] { '$' }, 4, StringSplitOptions.RemoveEmptyEntries);
+            if (ret.Length < 3)
+            {
+                throw new ArgumentException("Invalid MCF string");
+            }
+
+            sh.Protocol = ret[0];
+
+            if (!ret[1].StartsWith("rounds="))
+            {
+                sh.Salt = ret[1];
+                sh.Hash = ret[2];
+            }
+            else
+            {
+                sh.Rounds = ret[1];
+                sh.Salt = ret[2];
+                sh.Hash = ret[3];
+            }
+
+            return sh;
+        }
+
+        public string GetFullSalt()
+        {
+            if (string.IsNullOrEmpty(Rounds))
+            {
+                return string.Format("${0}${1}", Protocol, Salt);
+            }
+
+            return string.Format("${0}${1}${2}", Protocol, Rounds, Salt);
+        }
+    }
+
     public class CryptUtils
     {
         public const string TypeMd5 = "$1$";
@@ -38,20 +87,10 @@ namespace PasswordSharp
             throw new ArgumentException("Unsupported algorithm");
         }
 
-        private static string[] SplitHash(string hash)
-        {
-            return hash.Split(new char[] { '$' }, 3, StringSplitOptions.RemoveEmptyEntries);
-        }
-
         public static bool Verify(string hash, string password)
         {
-            var components = SplitHash(hash);
-            if (components.Length != 3)
-            {
-                throw new ArgumentException("Invalid hash");
-            }
-
-            string salt = string.Format("${0}${1}", components[0], components[1]);
+            var sh = SplittedHash.Parse(hash);
+            string salt = sh.GetFullSalt();
 
             // Has the password with the salt from the hash
             string newHash = Crypt(password, salt);
@@ -62,6 +101,12 @@ namespace PasswordSharp
         public static string MakeSalt()
         {
             return MakeSalt(DefaultType);
+        }
+
+        private static int GetRounds()
+        {
+            var random = new Random();
+            return random.Next(10000, 60000);
         }
 
         public static string MakeSalt(string algoType)
@@ -83,7 +128,7 @@ namespace PasswordSharp
             var random = new RNGCryptoServiceProvider();
             random.GetNonZeroBytes(randomBytes);
 
-            return algoType + Convert.ToBase64String(randomBytes);
+            return string.Format("{0}rounds={1}${2}", algoType, GetRounds(), Convert.ToBase64String(randomBytes));
         }
     }
 }
