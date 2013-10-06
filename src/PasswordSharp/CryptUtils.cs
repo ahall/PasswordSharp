@@ -111,6 +111,11 @@ namespace PasswordSharp
 
         public static string MakeSalt(string algoType)
         {
+            return MakeSalt(algoType, GetRounds());
+        }
+
+        public static string MakeSalt(string algoType, int rounds)
+        {
             int saltChars = 16;
             if (algoType == TypeMd5)
             {
@@ -128,7 +133,7 @@ namespace PasswordSharp
             var random = new RNGCryptoServiceProvider();
             random.GetNonZeroBytes(randomBytes);
 
-            return string.Format("{0}rounds={1}${2}", algoType, GetRounds(), Convert.ToBase64String(randomBytes));
+            return string.Format("{0}rounds={1}${2}", algoType, rounds, Convert.ToBase64String(randomBytes));
         }
     }
 }
