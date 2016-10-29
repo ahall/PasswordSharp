@@ -1,5 +1,7 @@
-# title
+## Title
 
-# version
+## Version
+
+## Motivation
 
 Safe password hashing for C#. Works with the modular crypt format and is an implementation of http://www.akkadia.org/drepper/SHA-crypt.txt. This code is heavily based on https://gist.github.com/1092558.
